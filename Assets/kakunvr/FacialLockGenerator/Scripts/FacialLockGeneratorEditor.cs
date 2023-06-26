@@ -131,9 +131,55 @@ namespace kakunvr.FacialLockGenerator.Scripts
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             _reorderableList.DoLayoutList();
             EditorGUILayout.EndScrollView();
-
-
+            
             GUILayout.FlexibleSpace();
+
+            var isOk = true;
+            string errorMessage = "";
+            if (_facialList.Count <= 0)
+            {
+                isOk = false;
+                errorMessage = "表情データがありません";
+            }
+            else
+            {
+                foreach (var facialData in _facialList)
+                {
+                    if (string.IsNullOrEmpty(facialData.Name))
+                    {
+                        isOk = false;
+                        errorMessage = "表情名が空です";
+                        break;
+                    }
+
+                    var count = _facialList.Count(x => x.Name == facialData.Name);
+                    if (count>1)
+                    {
+                        isOk = false;
+                        errorMessage = $"{facialData.Name}の表情名が重複しています";
+                        break;
+                    }
+
+                    if (facialData.Name == "_reset" ||
+                        facialData.Name == "_none" ||
+                        facialData.Name=="_default")
+                    {
+                        isOk = false;
+                        errorMessage = $"{facialData.Name}は使用できない表情名です";
+                        break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                GUILayout.BeginHorizontal("box");
+                var errorIcon = EditorGUIUtility.IconContent("console.erroricon").image;
+                EditorGUILayout.LabelField(new GUIContent(errorIcon), GUILayout.Height(errorIcon.height), GUILayout.Width(errorIcon.width));
+                GUILayout.Label(errorMessage);
+                GUILayout.EndHorizontal();
+            }
+            EditorGUI.BeginDisabledGroup(!isOk);
             if (GUILayout.Button("作成"))
             {
                 if (EditorUtility.DisplayDialog("確認", $"表情データを作成します。よろしいですか？", "作成する", "やっぱりやめる"))
@@ -141,6 +187,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     CreateFacialSettings();
                 }
             }
+            EditorGUI.EndDisabledGroup();
         }
 
         private void ApplyBlendShape(List<BlendShapeData> blendShapeDatas)
@@ -657,6 +704,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
             prefabObject.transform.localPosition = Vector3.zero;
             prefabObject.transform.localScale = Vector3.one;
             prefabObject.transform.localRotation = Quaternion.identity;
+            
+            Selection.activeGameObject = prefabObject;
         }
 
         private static string GetFullPath(Transform t)
@@ -714,7 +763,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var window = CreateInstance<AddAnimationClipWindow>();
             window.Initialize(editor, target);
             window.titleContent.text = "AddAnimationClipWindow";
-            window.ShowUtility();
+            window.ShowAuxWindow();
         }
 
         private void Initialize(FacialLockGeneratorEditor editor, GameObject t)
@@ -846,7 +895,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var window = CreateInstance<EditBlendShapeWindow>();
             window.Initialize(editor, target, facialData);
             window.titleContent.text = "EditBlendShapeWindow";
-            window.ShowUtility();
+            window.ShowAuxWindow();
         }
 
         private void Initialize(FacialLockGeneratorEditor editor, GameObject target, FacialData facialData)
@@ -887,7 +936,6 @@ namespace kakunvr.FacialLockGenerator.Scripts
 
         private void OnGUI()
         {
-            GUILayout.Label("アニメーションクリップから追加");
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
             foreach (var blendShape in _blendShapeData)
