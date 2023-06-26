@@ -405,6 +405,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     {
                         var original = originalBlendShapeData.Find(x =>
                             x.Target == blendShapeData.Target && x.Name == blendShapeData.Name);
+                        // ない場合は無視
+                        if (original == null) continue;
                         var curve = AnimationCurve.Constant(0, 0, original.Value);
                         var gameObjectPath = GetFullPath(blendShapeData.Target.transform)
                             .Substring((selectedGameObject.name + "/").Length);
