@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace kakunvr.FacialLockCreater.Scripts
+namespace kakunvr.FacialLockGenerator.Scripts
 {
     public sealed class EditorException : Exception
     {

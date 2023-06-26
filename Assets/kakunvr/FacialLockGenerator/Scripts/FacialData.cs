@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace kakunvr.FacialLockCreater.Scripts
+namespace kakunvr.FacialLockGenerator.Scripts
 {
     public class FacialData
     {

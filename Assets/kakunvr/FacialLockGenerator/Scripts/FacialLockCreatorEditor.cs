@@ -17,11 +17,11 @@ using AnimatorControllerParameter = UnityEngine.AnimatorControllerParameter;
 using AnimatorControllerParameterType = UnityEngine.AnimatorControllerParameterType;
 using AnimatorLayerBlendingMode = UnityEditor.Animations.AnimatorLayerBlendingMode;
 
-namespace kakunvr.FacialLockCreater.Scripts
+namespace kakunvr.FacialLockGenerator.Scripts
 {
     public sealed class FacialLockCreatorEditor : EditorWindow
     {
-        private static string CreatePath = "Assets/kakunvr/FacialLockCreater/Generated";
+        private static string CreatePath = "Assets/kakunvr/FacialLockGenerator/Generated";
         private GameObject selectedGameObject;
 
         private Vector2 _scrollPosition = Vector2.zero;
