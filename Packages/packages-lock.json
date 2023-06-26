@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.kakunvr.facial-lock-generator": {
+      "version": "file:com.kakunvr.facial-lock-generator",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.4.11",
       "depth": 1,
