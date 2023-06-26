@@ -78,3 +78,5 @@ DoNotGithubPush.meta
 DoNotGithubPush/
 Assets/kakunvr/FacialLockGenerator/Generated.meta
 Assets/kakunvr/FacialLockGenerator/Generated/
+
+.DS_Store

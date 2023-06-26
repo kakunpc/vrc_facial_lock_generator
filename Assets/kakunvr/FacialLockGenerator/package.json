@@ -1,7 +1,11 @@
 {
   "name": "com.kakunvr.facial-lock-generator",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "displayName": "FacialLockGenerator",
   "description": "FacialLockGenerator",
-  "unity": "2019.4"
+  "unity": "2019.4",
+  "vpmDependencies": {
+    "com.vrchat.avatars": ">=3.2.0",
+    "nadena.dev.modular-avatar": ">=1.6.0"
+  }
 }
