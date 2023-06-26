@@ -46,6 +46,11 @@ https://kakunpc.github.io/kakunpc_vpm/ を開き、「Add to VCC」をクリッ�
 作成を押したら自動でセットアップされPrefabが生成されます。  
 <img width="1221" alt="image" src="https://github.com/kakunpc/vrc_facial_lock_generator/assets/15257475/e76a889b-8418-4acd-8d7d-f84e252ab2ca">
 
+（オプション）Gesture Managerを導入済みの場合は、一度動作を確認してみましょう。  
+正しくセットアップされていれば、表情変更ギミックが動作します。
+<img width="665" alt="image" src="https://github.com/kakunpc/vrc_facial_lock_generator/assets/15257475/74a4985f-9435-497f-a0eb-731dbb352508">
+
+
 最後にいつも通りアバターをアップロードして完了です。
 
 
