@@ -19,7 +19,7 @@ using AnimatorLayerBlendingMode = UnityEditor.Animations.AnimatorLayerBlendingMo
 
 namespace kakunvr.FacialLockGenerator.Scripts
 {
-    public sealed class FacialLockCreatorEditor : EditorWindow
+    public sealed class FacialLockGeneratorEditor : EditorWindow
     {
         private static string CreatePath = "Assets/kakunvr/FacialLockGenerator/Generated";
         private GameObject selectedGameObject;
@@ -30,7 +30,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
         private const string AfkParamName = "AFK";
         private const string FacialLockIdParamName = "FacialLockId";
 
-        [MenuItem("GameObject/kakunvr/Setup FacialLockCreator", false, 0)]
+        [MenuItem("GameObject/kakunvr/Setup FacialLockGenerator", false, 0)]
         public static void Create()
         {
             var gameObject = Selection.activeGameObject;
@@ -53,8 +53,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
 
         private static void CreateWindow(GameObject gameObject)
         {
-            var w = (FacialLockCreatorEditor)GetWindow(typeof(FacialLockCreatorEditor));
-            w.titleContent.text = "Setup FacialLockCreator";
+            var w = (FacialLockGeneratorEditor)GetWindow(typeof(FacialLockGeneratorEditor));
+            w.titleContent.text = "Setup FacialLockGenerator";
             w.SetGameObject(gameObject);
         }
 
@@ -157,7 +157,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
         private void CreateFacialSettings()
         {
             // 生成用のディレクトリを作成
-            var dirName = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+            var date = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+            var dirName = $"{date}_{selectedGameObject.name.Replace("/", "").Replace("\\", "")}";
             var dirPath = Path.Combine(CreatePath, dirName);
             Directory.CreateDirectory(dirPath);
 
@@ -313,6 +314,22 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var animationPath = Path.Combine(dirPath, "animation");
             Directory.CreateDirectory(animationPath);
 
+            // 現在のデフォルトの表情を保存しておく
+            var originalBlendShapeData = new List<BlendShapeData>();
+            var skinMeshRenderers = selectedGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+            foreach (var skinnedMeshRenderer in skinMeshRenderers)
+            {
+                for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
+                {
+                    originalBlendShapeData.Add(new BlendShapeData()
+                    {
+                        Target = skinnedMeshRenderer,
+                        Name = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i),
+                        Value = (int)skinnedMeshRenderer.GetBlendShapeWeight(i)
+                    });
+                }
+            }
+
             for (var i = 0; i < _facialList.Count; ++i)
             {
                 var facialData = _facialList[i];
@@ -326,12 +343,32 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     clip.SetCurve(gameObjectPath, typeof(SkinnedMeshRenderer),
                         "blendShape." + blendShapeData.Name, curve);
                 }
-                
+
                 AssetDatabase.CreateAsset(clip, Path.Combine(animationPath, $"{facialData.Name}.anim"));
             }
-            
-            
-            AssetDatabase.CreateAsset(new AnimationClip(), Path.Combine(animationPath, "_none.anim"));
+
+
+            // リセット用のアニメーションを作成
+            {
+                var clip = new AnimationClip();
+                clip.ClearCurves();
+                foreach (var facialData in _facialList)
+                {
+                    foreach (var blendShapeData in facialData.BlendShapeData)
+                    {
+                        var original = originalBlendShapeData.Find(x =>
+                            x.Target == blendShapeData.Target && x.Name == blendShapeData.Name);
+                        var curve = AnimationCurve.Constant(0, 0, original.Value);
+                        var gameObjectPath = GetFullPath(blendShapeData.Target.transform)
+                            .Substring((selectedGameObject.name + "/").Length);
+                        clip.SetCurve(gameObjectPath, typeof(SkinnedMeshRenderer),
+                            "blendShape." + blendShapeData.Name, curve);
+                    }
+                }
+
+                AssetDatabase.CreateAsset(clip, Path.Combine(animationPath, "_reset.anim"));
+                AssetDatabase.CreateAsset(new AnimationClip(), Path.Combine(animationPath, "_none.anim"));
+            }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -343,6 +380,68 @@ namespace kakunvr.FacialLockGenerator.Scripts
             Directory.CreateDirectory(animatorPath);
             
             var animatorController = AnimatorController.CreateAnimatorControllerAtPath(Path.Combine(animatorPath, "animation.controller"));
+            
+            // Reset
+            var resetLayer = new AnimatorControllerLayer
+            {
+                name = animatorController.MakeUniqueLayerName("FacialLocker_Reset"),
+                blendingMode = AnimatorLayerBlendingMode.Override,
+                defaultWeight = 1f,
+                stateMachine = new AnimatorStateMachine()
+            };
+            resetLayer.stateMachine.name = resetLayer.name;
+            resetLayer.stateMachine.hideFlags = HideFlags.HideInHierarchy;
+            if (AssetDatabase.GetAssetPath(animatorController) != "")
+            {
+                AssetDatabase.AddObjectToAsset(resetLayer.stateMachine, AssetDatabase.GetAssetPath(animatorController));
+            }
+            animatorController.AddLayer(resetLayer);
+
+            // Reset用のステート
+            {
+                var noneState = resetLayer.stateMachine.AddState(resetLayer.stateMachine.MakeUniqueStateName("none"),
+                    new Vector3(100, 200, 0));
+                noneState.writeDefaultValues = false;
+                noneState.motion =
+                    AssetDatabase.LoadAssetAtPath<AnimationClip>(Path.Combine(dirPath, "animation", "_none.anim"));
+                var resetState = resetLayer.stateMachine.AddState(resetLayer.stateMachine.MakeUniqueStateName("reset"),
+                    new Vector3(400, 200, 0));
+                resetState.writeDefaultValues = false;
+                resetState.motion =
+                    AssetDatabase.LoadAssetAtPath<AnimationClip>(Path.Combine(dirPath, "animation", "_reset.anim"));
+                var resetEndState = resetLayer.stateMachine.AddState(
+                    resetLayer.stateMachine.MakeUniqueStateName("resetEnd"),
+                    new Vector3(700, 200, 0));
+                resetEndState.writeDefaultValues = false;
+                resetEndState.motion =
+                    AssetDatabase.LoadAssetAtPath<AnimationClip>(Path.Combine(dirPath, "animation", "_reset.anim"));
+
+                resetLayer.stateMachine.defaultState = noneState;
+
+                var transition = noneState.AddTransition(resetState);
+                transition.hasExitTime = false;
+                transition.duration = 0.1f;
+                transition.AddCondition(AnimatorConditionMode.NotEqual, 0, FacialLockIdParamName);
+                transition.AddCondition(AnimatorConditionMode.IfNot, 0, AfkParamName);
+
+                transition = resetState.AddTransition(resetEndState);
+                transition.hasExitTime = false;
+                transition.duration = 0.1f;
+                transition.AddCondition(AnimatorConditionMode.Equals, 0, FacialLockIdParamName);
+
+                transition = resetState.AddTransition(resetEndState);
+                transition.hasExitTime = false;
+                transition.duration = 0.1f;
+                transition.AddCondition(AnimatorConditionMode.If, 0, AfkParamName);
+
+                transition = resetEndState.AddExitTransition();
+                transition.hasExitTime = true;
+                transition.exitTime = 0.75f;
+                transition.hasFixedDuration = true;
+                transition.duration = 0.1f;
+            }
+
+
             var layer = new AnimatorControllerLayer
             {
                 name = animatorController.MakeUniqueLayerName("FacialLocker"),
@@ -358,6 +457,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 AssetDatabase.AddObjectToAsset(layer.stateMachine, AssetDatabase.GetAssetPath(animatorController));
             }
             animatorController.AddLayer(layer);
+            
             // baseを削除
             animatorController.RemoveLayer(0);
 
@@ -381,16 +481,16 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var p = layer.stateMachine.AddAnyStateTransition(defaultState);
             p.AddCondition(AnimatorConditionMode.Equals, 0, FacialLockIdParamName);
             p.canTransitionToSelf = false;
-            p.duration = 0f;
-            p.offset = 0f;
-            p.exitTime = 0f;
+            p.duration = 0.1f;
+            // p.offset = 0f;
+            // p.exitTime = 0f;
 
             var p2 = layer.stateMachine.AddAnyStateTransition(defaultState);
             p2.AddCondition(AnimatorConditionMode.If, 1, AfkParamName);
             // p2.canTransitionToSelf = false;
-            p2.duration = 0f;
-            p2.offset = 0f;
-            p2.exitTime = 0f;
+            p2.duration = 0.1f;
+            // p2.offset = 0f;
+            // p2.exitTime = 0f;
             
             layer.stateMachine.defaultState = defaultState;
             layer.stateMachine.anyStatePosition = new Vector3(0, 400, 0);
@@ -415,9 +515,9 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 transition.AddCondition(AnimatorConditionMode.Equals, 1 + i, FacialLockIdParamName);
                 transition.AddCondition(AnimatorConditionMode.IfNot, 0, AfkParamName);
                 transition.canTransitionToSelf = false;
-                transition.duration = 0f;
-                transition.offset = 0f;
-                transition.exitTime = 0f;
+                transition.duration = 0.1f;
+                // transition.offset = 0f;
+                // transition.exitTime = 0f;
                 
                 var trackingControl = state.AddStateMachineBehaviour<VRCAnimatorTrackingControl>();
                 trackingControl.trackingHead = VRC_AnimatorTrackingControl.TrackingType.NoChange;
@@ -460,7 +560,6 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 },
                 value = 0
             });
-            EditorUtility.SetDirty(menuAsset);
             
             int menuIndex = 0;
 
@@ -480,9 +579,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
                         type = VRCExpressionsMenu.Control.ControlType.SubMenu,
                         subMenu = newMenu
                     });
-                    
+                    EditorUtility.SetDirty(menuAsset);
                     menuAsset = newMenu;
-                    EditorUtility.SetDirty(newMenu);
                 }
 
                 menuAsset.controls.Add(new VRCExpressionsMenu.Control()
@@ -498,6 +596,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     value = i + 1
                 });
             }
+            EditorUtility.SetDirty(menuAsset);
 
             // MA登録用のRootメニューを作る
             var menuRootAsset =
@@ -518,8 +617,12 @@ namespace kakunvr.FacialLockGenerator.Scripts
 
         private void SetupModularAvatar(string dirPath)
         {
-            var modularAvatar = new GameObject("MA_FaceLocker");
+            var avatarName = selectedGameObject.name.Replace("/", "").Replace("\\", "");
+            var modularAvatar = new GameObject($"MA_FaceLocker_{avatarName}");
             modularAvatar.transform.SetParent(selectedGameObject.transform);
+            modularAvatar.transform.localPosition = Vector3.zero;
+            modularAvatar.transform.localScale = Vector3.one;
+            modularAvatar.transform.localRotation = Quaternion.identity;
 
             var facialLocker = modularAvatar.AddComponent<ModularAvatarParameters>();
             facialLocker.parameters.Add(new ParameterConfig()
@@ -547,10 +650,13 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 "menu", "menuroot_ma.asset"));
 
             // 使い回せるようにprefab化する
-            var prefabPath = Path.Combine(dirPath, "MA_FaceLocker.prefab");
+            var prefabPath = Path.Combine(dirPath, $"{modularAvatar.name}.prefab");
             var prefab = PrefabUtility.SaveAsPrefabAsset(modularAvatar, prefabPath);
             DestroyImmediate(modularAvatar);
-            PrefabUtility.InstantiatePrefab(prefab, selectedGameObject.transform);
+            var prefabObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab, selectedGameObject.transform);
+            prefabObject.transform.localPosition = Vector3.zero;
+            prefabObject.transform.localScale = Vector3.one;
+            prefabObject.transform.localRotation = Quaternion.identity;
         }
 
         private static string GetFullPath(Transform t)
@@ -600,10 +706,10 @@ namespace kakunvr.FacialLockGenerator.Scripts
         private Dictionary<string, bool> _facialList = new Dictionary<string, bool>();
 
         private Vector2 _scrollPosition = Vector2.zero;
-        private FacialLockCreatorEditor facialLockCreatorEditor;
+        private FacialLockGeneratorEditor FacialLockGeneratorEditor;
         private GameObject target;
 
-        public static void Show(FacialLockCreatorEditor editor, GameObject target)
+        public static void Show(FacialLockGeneratorEditor editor, GameObject target)
         {
             var window = CreateInstance<AddAnimationClipWindow>();
             window.Initialize(editor, target);
@@ -611,9 +717,9 @@ namespace kakunvr.FacialLockGenerator.Scripts
             window.ShowUtility();
         }
 
-        private void Initialize(FacialLockCreatorEditor editor, GameObject t)
+        private void Initialize(FacialLockGeneratorEditor editor, GameObject t)
         {
-            facialLockCreatorEditor = editor;
+            FacialLockGeneratorEditor = editor;
             target = t;
 
             // FXレイヤーに保存されているアニメーションクリップを取得
@@ -706,7 +812,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                         Name = Path.GetFileNameWithoutExtension(facial.Key),
                         BlendShapeData = blendShapeData
                     };
-                    facialLockCreatorEditor.Add(data);
+                    FacialLockGeneratorEditor.Add(data);
                 }
 
                 Close();
@@ -735,7 +841,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
         private Vector2 _scrollPosition = Vector2.zero;
         private FacialData _facialData;
 
-        public static void Show(FacialLockCreatorEditor editor, GameObject target, FacialData facialData)
+        public static void Show(FacialLockGeneratorEditor editor, GameObject target, FacialData facialData)
         {
             var window = CreateInstance<EditBlendShapeWindow>();
             window.Initialize(editor, target, facialData);
@@ -743,7 +849,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
             window.ShowUtility();
         }
 
-        private void Initialize(FacialLockCreatorEditor editor, GameObject target, FacialData facialData)
+        private void Initialize(FacialLockGeneratorEditor editor, GameObject target, FacialData facialData)
         {
             _facialData = facialData;
             // targetからブレンドシェイプをすべて取得

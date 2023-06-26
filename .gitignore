@@ -75,5 +75,5 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 DoNotGithubPush/
-Assets/kakunvr/FacialLockCreater/Generated.meta
-Assets/kakunvr/FacialLockCreater/Generated/
+Assets/kakunvr/FacialLockGenerator/Generated.meta
+Assets/kakunvr/FacialLockGenerator/Generated/
