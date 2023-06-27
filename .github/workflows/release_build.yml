@@ -6,6 +6,20 @@ on:
 
 jobs:
   activation:
+    permissions:
+      actions: write
+      checks: none
+      contents: write
+      deployments: write
+      id-token: none
+      issues: none
+      discussions: none
+      packages: none
+      pages: write
+      pull-requests: none
+      repository-projects: write
+      security-events: none
+      statuses: write
     name: ReleaseBuild
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +51,7 @@ jobs:
           zip com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
 
       - name: Create release
-        uses: actions/create-release@v1.0.0
+        uses: elgohr/Github-Release-Action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -47,21 +61,10 @@ jobs:
           prerelease: false
 
       - name: Upload VCC Asset
-        uses: actions/upload-release-asset@v1.0.1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: com.kakunvr.facial-lock-generator-${{ env.VERSION }}.zip
-          asset_name: com.kakunvr.facial-lock-generator-${{ env.VERSION }}.zip
-          asset_content_type: application/zip
-
-      - name: Upload UnityPackage Asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: FacialLockGenerator-${{ env.VERSION }}/FacialLockGenerator-${{ env.VERSION }}.unitypackage
-          asset_name: FacialLockGenerator-${{ env.VERSION }}.unitypackage
-          asset_content_type: application/zip
+          files: |
+            com.kakunvr.facial-lock-generator-${{ env.VERSION }}.zip
+            FacialLockGenerator-${{ env.VERSION }}/FacialLockGenerator-${{ env.VERSION }}.unitypackage
