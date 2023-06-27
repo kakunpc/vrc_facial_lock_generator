@@ -20,7 +20,7 @@ jobs:
       - name: Create Booth Package
         run: |
           mkdir FacialLockGenerator-$VERSION
-          cp Docs/ FacialLockGenerator-$VERSION/
+          cp -r Docs/ FacialLockGenerator-$VERSION/
           cp LICENSE FacialLockGenerator-$VERSION/
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
