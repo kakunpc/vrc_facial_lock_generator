@@ -8,13 +8,10 @@ jobs:
   activation:
     name: ReleaseBuild
     runs-on: ubuntu-latest
+    env:
+      VERSION: $(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
     steps:
       - uses: actions/checkout@v2
-
-      - name: GetVersion
-        run: | 
-          VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
-          echo ::set-output name=version::$VERSION
 
       # package.jsonのバージョン値を書き換える
       - name: Change Version
