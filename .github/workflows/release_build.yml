@@ -22,7 +22,8 @@ jobs:
           mkdir FacialLockGenerator-$VERSION
           cp Docs/* FacialLockGenerator-$VERSION/*
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
-          zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION
+          zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
+          ls -al
       
       - name: Artifact
         uses: actions/upload-artifact@v2
