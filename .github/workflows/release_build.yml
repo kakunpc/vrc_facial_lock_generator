@@ -6,20 +6,6 @@ on:
 
 jobs:
   activation:
-    permissions:
-      actions: write
-      checks: none
-      contents: write
-      deployments: write
-      id-token: none
-      issues: none
-      discussions: none
-      packages: none
-      pages: write
-      pull-requests: none
-      repository-projects: write
-      security-events: none
-      statuses: write
     name: ReleaseBuild
     runs-on: ubuntu-latest
     steps:
@@ -53,17 +39,18 @@ jobs:
       - name: Create release
         uses: elgohr/Github-Release-Action@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+          title: ${{ env.VERSION }}
 
       - name: Upload VCC Asset
         uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           files: |
             com.kakunvr.facial-lock-generator-${{ env.VERSION }}.zip
