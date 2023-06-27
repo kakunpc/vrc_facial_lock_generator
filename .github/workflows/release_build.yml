@@ -43,7 +43,8 @@ jobs:
         env:
           VERSION: ${{ steps.vars.outputs.tag }}
         run: |
-          zip output/com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
+          cd Packages/com.kakunvr.facial-lock-generator
+          zip -r ../../output/com.kakunvr.facial-lock-generator-$VERSION.zip *
 
       - name: Create release
         uses: softprops/action-gh-release@v1
