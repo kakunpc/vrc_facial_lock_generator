@@ -19,13 +19,13 @@ jobs:
       # Booth配布用のzipを作成する
       - name: Create Booth Package
         run: |
-          mkdir FacialLockGenerator-{{ env.VERSION }}}
-          cp Docs/* FacialLockGenerator-{{ env.VERSION }}}/*
-          cp ExportedPackage.unitypackage FacialLockGenerator-{{ env.VERSION }}}/FacialLockGenerator-{{ env.VERSION }}}.unitypackage
-          zip FacialLockGenerator-{{ env.VERSION }}}.zip FacialLockGenerator-{{ env.VERSION }}}
+          mkdir FacialLockGenerator-{{ env.VERSION }}
+          cp Docs/* FacialLockGenerator-{{ env.VERSION }}/*
+          cp ExportedPackage.unitypackage FacialLockGenerator-{{ env.VERSION }}/FacialLockGenerator-{{ env.VERSION }}.unitypackage
+          zip FacialLockGenerator-{{ env.VERSION }}.zip FacialLockGenerator-{{ env.VERSION }}
       
       - name: Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: FacialLockGenerator-{{ env.VERSION }}}.zip
-          path: FacialLockGenerator-{{ env.VERSION }}}.zip
+          name: FacialLockGenerator-{{ env.VERSION }}.zip
+          path: FacialLockGenerator-{{ env.VERSION }}.zip
