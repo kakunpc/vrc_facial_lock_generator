@@ -8,13 +8,17 @@ jobs:
   activation:
     name: ReleaseBuild
     runs-on: ubuntu-latest
-    env:
-      VERSION: $(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set output
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
       # package.jsonのバージョン値を書き換える
       - name: Change Version
+        env:
+          VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" Packages/com.kakunvr.facial-lock-generator/package.json
           mkdir output
@@ -24,6 +28,8 @@ jobs:
 
       # Booth配布用のzipを作成する
       - name: Create Booth Package
+        env:
+          VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           mv Docs/ FacialLockGenerator-$VERSION/
           cp LICENCE FacialLockGenerator-$VERSION/
@@ -34,6 +40,8 @@ jobs:
 
       # VCC用のzipを作成する
       - name: Create VCC Package
+        env:
+          VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           zip output/com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
 
