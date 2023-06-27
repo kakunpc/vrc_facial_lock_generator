@@ -20,10 +20,11 @@ jobs:
       - name: Create Booth Package
         run: |
           mkdir FacialLockGenerator-$VERSION
-          cp Docs/* FacialLockGenerator-$VERSION/*
+          cp Docs/ FacialLockGenerator-$VERSION/
+          cp LICENSE FacialLockGenerator-$VERSION/
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
-          ls -al
+          mv FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION-booth.zip
       
       - name: Artifact
         uses: actions/upload-artifact@v2
