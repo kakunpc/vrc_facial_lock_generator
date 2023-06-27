@@ -5,14 +5,27 @@ jobs:
   activation:
     name: ReleaseBuild
     runs-on: ubuntu-latest
+    env:
+      VERSION: 0.0.1
     steps:
       - uses: actions/checkout@v2
 
+      # バージョン値を書き換える
+
+
       - name: CreatePackage
         run: ./.github/UnityPacker.exe Packages/com.kakunvr.facial-lock-generator ExportedPackage
+
+      # Booth配布用のzipを作成する
+      - name: Create Booth Package
+        run: |
+          mkdir FacialLockGenerator-{{ env.VERSION }}}
+          cp Docs/* FacialLockGenerator-{{ env.VERSION }}}/*
+          cp ExportedPackage.unitypackage FacialLockGenerator-{{ env.VERSION }}}/FacialLockGenerator-{{ env.VERSION }}}.unitypackage
+          zip FacialLockGenerator-{{ env.VERSION }}}.zip FacialLockGenerator-{{ env.VERSION }}}
       
       - name: Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ExportedPackage.unitypackage
-          path: ExportedPackage.unitypackage
+          name: FacialLockGenerator-{{ env.VERSION }}}.zip
+          path: FacialLockGenerator-{{ env.VERSION }}}.zip
