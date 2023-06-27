@@ -21,6 +21,8 @@ jobs:
           VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" Packages/com.kakunvr.facial-lock-generator/package.json
+          sed -i -e "s/CurrentVersion: \".*\"/CurrentVersion: $VERSION/g" Packages/com.kakunvr.facial-lock-generator/VersionData.asset
+          
           mkdir output
 
       - name: CreatePackage
