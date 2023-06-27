@@ -14,7 +14,6 @@ jobs:
       - name: Change Version
         run: |
           sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" Packages/com.kakunvr.facial-lock-generator/package.json
-          rm Packages/com.kakunvr.facial-lock-generator/package.json-e
 
       - name: CreatePackage
         run: ./.github/UnityPacker.exe Packages/com.kakunvr.facial-lock-generator ExportedPackage
