@@ -10,8 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # バージョン値を書き換える
-
+      # package.jsonのバージョン値を書き換える
+      - name: Change Version
+        run: |
+          sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" Packages/com.kakunvr.facial-lock-generator/package.json
+          rm Packages/com.kakunvr.facial-lock-generator/package.json-e
 
       - name: CreatePackage
         run: ./.github/UnityPacker.exe Packages/com.kakunvr.facial-lock-generator ExportedPackage
@@ -28,7 +31,7 @@ jobs:
       # VCC用のzipを作成する
       - name: Create VCC Package
         run: |
-          zip Packages/com.kakunvr.facial-lock-generator com.kakunvr.facial-lock-generator-$VERSION.zip
+          zip com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
       
       - name: Artifact
         uses: actions/upload-artifact@v2
