@@ -19,8 +19,7 @@ jobs:
       # Booth配布用のzipを作成する
       - name: Create Booth Package
         run: |
-          mkdir FacialLockGenerator-$VERSION
-          cp -r Docs/ FacialLockGenerator-$VERSION/
+          mv Docs/ FacialLockGenerator-$VERSION/
           cp LICENCE FacialLockGenerator-$VERSION/
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
