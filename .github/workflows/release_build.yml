@@ -24,6 +24,11 @@ jobs:
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
           mv FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION-booth.zip
+
+      # VCC用のzipを作成する
+      - name: Create VCC Package
+        run: |
+          zip Packages/com.kakunvr.facial-lock-generator com.kakunvr.facial-lock-generator-$VERSION.zip
       
       - name: Artifact
         uses: actions/upload-artifact@v2
