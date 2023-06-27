@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir FacialLockGenerator-$VERSION
           cp -r Docs/ FacialLockGenerator-$VERSION/
-          cp LICENSE FacialLockGenerator-$VERSION/
+          cp LICENCE FacialLockGenerator-$VERSION/
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
           mv FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION-booth.zip
