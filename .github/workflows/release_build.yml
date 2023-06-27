@@ -7,6 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+    
+      - uses: actions/cache@v2
+        with:
+          path: ./Library
+          key: Library-MyProjectName-TargetPlatform
+          restore-keys: |
+            Library-MyProjectName-
+            Library-
 
       - name: ExportUnityPackage
         uses: game-ci/unity-builder@v2
@@ -16,6 +24,8 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           buildMethod: ExportPackage.CreatePackage
+          unityVersion: 2019.4.31f1
+          targetPlatform: StandaloneWindows
       
       - name: Artifact
         uses: actions/upload-artifact@v2
