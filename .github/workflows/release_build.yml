@@ -37,7 +37,6 @@ jobs:
           zip com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
 
       - name: Create release
-        id: create_release
         uses: actions/create-release@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +47,6 @@ jobs:
           prerelease: false
 
       - name: Upload VCC Asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,7 +57,6 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload UnityPackage Asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
