@@ -23,10 +23,9 @@ jobs:
           cp Docs/* FacialLockGenerator-$VERSION/*
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION
-          ls -al
       
       - name: Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: FacialLockGenerator-{{ env.VERSION }}.zip
-          path: FacialLockGenerator-{{ env.VERSION }}.zip
+          name: FacialLockGenerator
+          path: FacialLockGenerator-*.zip
