@@ -18,6 +18,7 @@ jobs:
       - name: Change Version
         run: |
           sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" Packages/com.kakunvr.facial-lock-generator/package.json
+          mkdir output
 
       - name: CreatePackage
         run: ./.github/UnityPacker.exe Packages/com.kakunvr.facial-lock-generator ExportedPackage
@@ -29,31 +30,26 @@ jobs:
           cp LICENCE FacialLockGenerator-$VERSION/
           cp ExportedPackage.unitypackage FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage
           zip FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION/*
-          mv FacialLockGenerator-$VERSION.zip FacialLockGenerator-$VERSION-booth.zip
+          mv FacialLockGenerator-$VERSION.zip output/FacialLockGenerator-$VERSION-booth.zip
+          mv FacialLockGenerator-$VERSION/FacialLockGenerator-$VERSION.unitypackage output/FacialLockGenerator-$VERSION.unitypackage
 
       # VCC用のzipを作成する
       - name: Create VCC Package
         run: |
-          zip com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
+          zip output/com.kakunvr.facial-lock-generator-$VERSION.zip Packages/com.kakunvr.facial-lock-generator/*
+
+      # - name: Create release
+      #   uses: elgohr/Github-Release-Action@v4
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      #     VERSION: $(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
+      #   with:
+      #     title: ${{ env.VERSION }}
 
       - name: Create release
-        uses: elgohr/Github-Release-Action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          VERSION: $(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-          title: ${{ env.VERSION }}
-
-      - name: Upload VCC Asset
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          VERSION: $(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
         with:
           files: |
-            com.kakunvr.facial-lock-generator-${{ env.VERSION }}.zip
-            FacialLockGenerator-${{ env.VERSION }}/FacialLockGenerator-${{ env.VERSION }}.unitypackage
+            output/*
