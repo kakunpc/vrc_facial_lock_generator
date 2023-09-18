@@ -14,6 +14,9 @@
     },
     "jp.lilxyzw.liltoon": {
       "version": "1.4.0"
+    },
+    "jp.torisoup.versionchecker": {
+      "version": "1.0.1"
     }
   },
   "locked": {
@@ -45,6 +48,10 @@
     },
     "jp.lilxyzw.liltoon": {
       "version": "1.4.0",
+      "dependencies": {}
+    },
+    "jp.torisoup.versionchecker": {
+      "version": "1.0.1",
       "dependencies": {}
     }
   }

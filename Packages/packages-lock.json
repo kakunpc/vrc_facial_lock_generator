@@ -153,6 +153,12 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "jp.torisoup.versionchecker": {
+      "version": "file:jp.torisoup.versionchecker",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "nadena.dev.modular-avatar": {
       "version": "file:nadena.dev.modular-avatar",
       "depth": 0,
