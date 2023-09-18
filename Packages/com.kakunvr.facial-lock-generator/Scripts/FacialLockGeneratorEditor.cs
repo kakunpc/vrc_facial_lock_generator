@@ -369,6 +369,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var skinMeshRenderers = selectedGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
             foreach (var skinnedMeshRenderer in skinMeshRenderers)
             {
+                if(skinnedMeshRenderer.sharedMesh == null) continue;
+
                 for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
                 {
                     originalBlendShapeData.Add(new BlendShapeData()
@@ -911,6 +913,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
             foreach (var meshRenderer in skinnedMeshRenderers)
             {
                 var blendShapeData = new List<EditorBlendShapeData>();
+                if (meshRenderer.sharedMesh == null) continue;
+                
                 for (int i = 0; i < meshRenderer.sharedMesh.blendShapeCount; i++)
                 {
                     blendShapeData.Add(new EditorBlendShapeData()
