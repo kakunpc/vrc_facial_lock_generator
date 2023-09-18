@@ -240,6 +240,9 @@ namespace kakunvr.FacialLockGenerator.Scripts
             var skinMeshRenderers = selectedGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
             foreach (var skinnedMeshRenderer in skinMeshRenderers)
             {
+                // ここがnullになってる時がある？
+                if(skinnedMeshRenderer.sharedMesh == null) continue;
+                
                 for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
                 {
                     originalBlendShapeData.Add(new BlendShapeData()
