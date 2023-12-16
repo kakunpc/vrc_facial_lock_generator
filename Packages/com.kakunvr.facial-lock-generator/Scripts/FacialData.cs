@@ -1,18 +1,31 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace kakunvr.FacialLockGenerator.Scripts
 {
-    public class FacialData
+    [CreateAssetMenu()]
+    public class FacialList : ScriptableObject
     {
-        public string Name;
-        public List<BlendShapeData> BlendShapeData = new List<BlendShapeData>();
+        [SerializeField] public List<FacialData> FacialData = new List<FacialData>();
     }
 
+    [System.Serializable]
+    public class FacialData
+    {
+        [SerializeField] public string Name;
+
+        [SerializeField] public List<BlendShapeData> BlendShapeData = new List<BlendShapeData>();
+    }
+
+    [System.Serializable]
     public class BlendShapeData
     {
+        [NonSerialized]
         public SkinnedMeshRenderer Target;
-        public string Name;
-        public int Value;
+        
+        [SerializeField] public string TargetObjectName;
+        [SerializeField] public string Name;
+        [SerializeField] public int Value;
     }
 }

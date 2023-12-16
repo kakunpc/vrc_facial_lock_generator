@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: VersionData
   m_EditorClassIdentifier: 
   Id: vrc_facial_lock_generator
-  CurrentVersion: 0.0.5
+  CurrentVersion: 0.0.6
   VersionCsvRepositoryUri: https://docs.google.com/spreadsheets/d/1LrXZRlcNpnOUh6o9oUHqD94sZy5i_hj1npXX9pi6c0A/edit?usp=sharing

@@ -4,7 +4,9 @@
       "version": "file:com.kakunvr.facial-lock-generator",
       "depth": 0,
       "source": "embedded",
-      "dependencies": {}
+      "dependencies": {
+        "com.unity.editorcoroutines": "1.0.0"
+      }
     },
     "com.unity.burst": {
       "version": "1.4.11",
@@ -18,6 +20,13 @@
     "com.unity.collab-proxy": {
       "version": "1.6.0",
       "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.editorcoroutines": {
+      "version": "1.0.0",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -166,6 +175,12 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       }
+    },
+    "nadena.dev.ndmf": {
+      "version": "file:nadena.dev.ndmf",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "vrchat.blackstartx.gesture-manager": {
       "version": "file:vrchat.blackstartx.gesture-manager",

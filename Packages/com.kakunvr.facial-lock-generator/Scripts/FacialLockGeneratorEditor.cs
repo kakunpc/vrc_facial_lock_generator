@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using nadena.dev.modular_avatar.core;
+using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditorInternal;
@@ -128,10 +129,37 @@ namespace kakunvr.FacialLockGenerator.Scripts
 
             GUILayout.Space(30);
 
+            if (GUILayout.Button("以前のデータを反映"))
+            {
+                var filePath = EditorUtility.OpenFilePanelWithFilters("以前のデータを反映", CreatePath, new[] {"faciallist","asset"});
+                if (!string.IsNullOrWhiteSpace(filePath))
+                {
+                    // Assets までのパスを削除
+                    var assetPath = filePath.Substring(filePath.IndexOf("Assets", StringComparison.Ordinal));
+                    var facialData = (FacialList)AssetDatabase.LoadAssetAtPath(assetPath, typeof(FacialList));
+                    foreach (var data in facialData.FacialData)
+                    {
+                        // Targetを設定する
+                        foreach (var blendShapeData in data.BlendShapeData)
+                        {
+                            var target = selectedGameObject.transform.Find(blendShapeData.TargetObjectName);
+                            if (target == null)
+                            {
+                                Debug.LogWarning($"{blendShapeData.TargetObjectName}が見つかりません");
+                                continue;
+                            }
+
+                            blendShapeData.Target = target.GetComponent<SkinnedMeshRenderer>();
+                        }
+                        _facialList.Add(data);
+                    }
+                }
+            }
+
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             _reorderableList.DoLayoutList();
             EditorGUILayout.EndScrollView();
-            
+
             GUILayout.FlexibleSpace();
 
             var isOk = true;
@@ -153,7 +181,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     }
 
                     var count = _facialList.Count(x => x.Name == facialData.Name);
-                    if (count>1)
+                    if (count > 1)
                     {
                         isOk = false;
                         errorMessage = $"{facialData.Name}の表情名が重複しています";
@@ -162,7 +190,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
 
                     if (facialData.Name == "_reset" ||
                         facialData.Name == "_none" ||
-                        facialData.Name=="_default")
+                        facialData.Name == "_default")
                     {
                         isOk = false;
                         errorMessage = $"{facialData.Name}は使用できない表情名です";
@@ -175,18 +203,21 @@ namespace kakunvr.FacialLockGenerator.Scripts
             {
                 GUILayout.BeginHorizontal("box");
                 var errorIcon = EditorGUIUtility.IconContent("console.erroricon").image;
-                EditorGUILayout.LabelField(new GUIContent(errorIcon), GUILayout.Height(errorIcon.height), GUILayout.Width(errorIcon.width));
+                EditorGUILayout.LabelField(new GUIContent(errorIcon), GUILayout.Height(errorIcon.height),
+                    GUILayout.Width(errorIcon.width));
                 GUILayout.Label(errorMessage);
                 GUILayout.EndHorizontal();
             }
+
             EditorGUI.BeginDisabledGroup(!isOk);
             if (GUILayout.Button("作成"))
             {
                 if (EditorUtility.DisplayDialog("確認", $"表情データを作成します。よろしいですか？", "作成する", "やっぱりやめる"))
                 {
-                    CreateFacialSettings();
+                    EditorCoroutineUtility.StartCoroutine(CreateFacialSettings(), this);
                 }
             }
+
             EditorGUI.EndDisabledGroup();
         }
 
@@ -201,7 +232,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
             }
         }
 
-        private void CreateFacialSettings()
+        private IEnumerator CreateFacialSettings()
         {
             // 生成用のディレクトリを作成
             var date = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
@@ -210,8 +241,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
             Directory.CreateDirectory(dirPath);
 
             // サムネイルの作成
-            CreateThumbnail(dirPath);
-
+            yield return EditorCoroutineUtility.StartCoroutine(CreateThumbnail(dirPath), this);
+            
             // アニメーションファイルの作成
             CreateAnimationClip(dirPath);
 
@@ -224,12 +255,35 @@ namespace kakunvr.FacialLockGenerator.Scripts
             // モジュラーアバターの設定
             SetupModularAvatar(dirPath);
 
+            // データの保存
+            var facialList = CreateOrLoadScriptableObject<FacialList>(Path.Combine(dirPath, "faciallist.asset"));
+            // 保存する前にTargetを名前に変換する
+            foreach (var facialData in _facialList)
+            {
+                foreach (var blendShapeData in facialData.BlendShapeData)
+                {
+                    blendShapeData.TargetObjectName = blendShapeData.Target.name;
+                    blendShapeData.Target = null;
+                }
+            }
+            facialList.FacialData = _facialList;
+            EditorUtility.SetDirty(facialList);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
             EditorUtility.DisplayDialog("Info", "完了しました", "OK");
             Close();
         }
 
+        IEnumerator DelayLog()
+        {
+            Debug.Log("StartLog");
+            yield return new EditorWaitForSeconds(10);
+            Debug.Log("EndLog");
+        }
 
-        private void CreateThumbnail(string dirPath)
+
+        private IEnumerator CreateThumbnail(string dirPath)
         {
             var thumbnailPath = Path.Combine(dirPath, "thumbnail");
             Directory.CreateDirectory(thumbnailPath);
@@ -288,7 +342,9 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     ApplyBlendShape(facialData.BlendShapeData);
 
                     cam.Render();
-
+                    
+                    yield return new EditorWaitForSeconds(0.01f);
+                    
                     var tempRt = RenderTexture.GetTemporary(width, height);
 
                     Graphics.Blit(cam.targetTexture, tempRt);
