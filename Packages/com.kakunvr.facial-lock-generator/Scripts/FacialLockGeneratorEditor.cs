@@ -109,14 +109,14 @@ namespace kakunvr.FacialLockGenerator.Scripts
             menu.DropDown(buttonRect);
         }
 
-        private void EditBlendShape(FacialData facialData)
+        private void EditBlendShape(FacialData facialList)
         {
-            EditBlendShapeWindow.Show(this, selectedGameObject, facialData);
+            EditBlendShapeWindow.Show(this, selectedGameObject, facialList);
         }
 
-        public void Add(FacialData facialData)
+        public void Add(FacialData facialList)
         {
-            _facialList.Add(facialData);
+            _facialList.Add(facialList);
         }
 
         private void OnGUI()
@@ -274,14 +274,6 @@ namespace kakunvr.FacialLockGenerator.Scripts
             EditorUtility.DisplayDialog("Info", "完了しました", "OK");
             Close();
         }
-
-        IEnumerator DelayLog()
-        {
-            Debug.Log("StartLog");
-            yield return new EditorWaitForSeconds(10);
-            Debug.Log("EndLog");
-        }
-
 
         private IEnumerator CreateThumbnail(string dirPath)
         {
@@ -951,19 +943,19 @@ namespace kakunvr.FacialLockGenerator.Scripts
         private List<RootBlendShapeData> _blendShapeData = new List<RootBlendShapeData>();
 
         private Vector2 _scrollPosition = Vector2.zero;
-        private FacialData _facialData;
+        private FacialData _facialList;
 
-        public static void Show(FacialLockGeneratorEditor editor, GameObject target, FacialData facialData)
+        public static void Show(FacialLockGeneratorEditor editor, GameObject target, FacialData facialList)
         {
             var window = CreateInstance<EditBlendShapeWindow>();
-            window.Initialize(editor, target, facialData);
+            window.Initialize(editor, target, facialList);
             window.titleContent.text = "EditBlendShapeWindow";
             window.ShowAuxWindow();
         }
 
-        private void Initialize(FacialLockGeneratorEditor editor, GameObject target, FacialData facialData)
+        private void Initialize(FacialLockGeneratorEditor editor, GameObject target, FacialData facialList)
         {
-            _facialData = facialData;
+            _facialList = facialList;
             // targetからブレンドシェイプをすべて取得
             var skinnedMeshRenderers = target.GetComponentsInChildren<SkinnedMeshRenderer>();
             foreach (var meshRenderer in skinnedMeshRenderers)
@@ -990,7 +982,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
             }
 
             // facialDataに従って値を適応
-            foreach (var blendShape in facialData.BlendShapeData)
+            foreach (var blendShape in facialList.BlendShapeData)
             {
                 var rootBlendShape = _blendShapeData.First(x => x.Target == blendShape.Target);
                 var data = rootBlendShape.BlendShapeList.First(x => x.Name == blendShape.Name);
@@ -1040,11 +1032,11 @@ namespace kakunvr.FacialLockGenerator.Scripts
                         // FaceDataへ反映
                         if (b)
                         {
-                            var faceDataTarget = _facialData.BlendShapeData.Find(x =>
+                            var faceDataTarget = _facialList.BlendShapeData.Find(x =>
                                 x.Target == blendShape.Target && x.Name == blendShapeData.Name);
                             if (faceDataTarget == null)
                             {
-                                _facialData.BlendShapeData.Add(new BlendShapeData()
+                                _facialList.BlendShapeData.Add(new BlendShapeData()
                                 {
                                     Target = blendShape.Target,
                                     Name = blendShapeData.Name,
@@ -1059,7 +1051,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                         else
                         {
                             // 一致するものを削除
-                            _facialData.BlendShapeData.RemoveAll(x =>
+                            _facialList.BlendShapeData.RemoveAll(x =>
                                 x.Target == blendShape.Target && x.Name == blendShapeData.Name);
                         }
                     }
