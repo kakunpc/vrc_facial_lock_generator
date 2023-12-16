@@ -96,16 +96,49 @@ namespace kakunvr.FacialLockGenerator.Scripts
         {
             var menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("アニメーションクリップから追加"), false,
+            menu.AddItem(new GUIContent("FXレイヤーから追加"), false,
                 () => { AddAnimationClipWindow.Show(this, selectedGameObject); });
 
-            menu.AddItem(new GUIContent("ブレンドシェイプから追加"), false, () =>
+            menu.AddItem(new GUIContent("モデルのブレンドシェイプから追加"), false, () =>
             {
                 // 追加してから編集
                 var f = new FacialData();
                 Add(f);
                 EditBlendShape(f);
             });
+            
+            menu.AddItem(new GUIContent(".animで追加"), false, () =>
+            {
+                var path = EditorUtility.OpenFilePanelWithFilters("追加する.animを選択", Application.dataPath,
+                    new[] { "anim", "anim" });
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    var facialData = new FacialData();
+                    var blendShapeData = new List<BlendShapeData>();
+                    var assetPath = path.Substring(path.IndexOf("Assets", StringComparison.Ordinal));
+                    var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+                    var curves = AnimationUtility.GetCurveBindings(clip);
+                    foreach (var binding in curves)
+                    {
+                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                        var animT = selectedGameObject.transform.Find(binding.path)?.GetComponent<SkinnedMeshRenderer>();
+                        if (animT == null) continue;
+
+                        blendShapeData.Add(new BlendShapeData
+                        {
+                            Name = binding.propertyName.Substring("blendShape.".Length),
+                            Target = animT,
+                            Value = Mathf.RoundToInt(curve[curve.length - 1].value)
+                        });
+                    }
+
+                    facialData.Name = Path.GetFileNameWithoutExtension(path);
+                    facialData.BlendShapeData = blendShapeData;
+                    Add(facialData);
+                    EditBlendShape(facialData);
+                }
+            });
+            
             menu.DropDown(buttonRect);
         }
 
