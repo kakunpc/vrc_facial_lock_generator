@@ -14,7 +14,8 @@ namespace kakunvr.FacialLockGenerator.Scripts
     public class FacialData
     {
         [SerializeField] public string Name;
-
+        [SerializeField] public string Folder = "";
+        
         [SerializeField] public List<BlendShapeData> BlendShapeData = new List<BlendShapeData>();
     }
 

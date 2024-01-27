@@ -76,19 +76,28 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     var e = _facialList[index];
 
                     var width = rect.width;
+                    var startY = rect.y;
 
+                    // フォルダ名の設定
                     rect.height = EditorGUIUtility.singleLineHeight;
                     rect.width = width - 50;
-                    e.Name = EditorGUI.TextField(rect, "", e.Name);
+
+                    e.Folder = EditorGUI.TextField(rect, "フォルダ", e.Folder);
+                    rect.y += EditorGUIUtility.singleLineHeight;
+
+                    e.Name = EditorGUI.TextField(rect, "名前", e.Name);
                     var r = rect;
+                    r.y = startY;
                     r.x = rect.x + rect.width;
                     r.width = 50;
+                    r.height = EditorGUIUtility.singleLineHeight * 2;
                     if (GUI.Button(r, "Edit"))
                     {
                         EditBlendShape(e);
                     }
                 },
-                onAddDropdownCallback = OnAddDropdownCallback
+                onAddDropdownCallback = OnAddDropdownCallback,
+                elementHeight = EditorGUIUtility.singleLineHeight * 2
             };
         }
 
@@ -144,6 +153,9 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 var dir = EditorUtility.OpenFolderPanel("追加する.animを選択", Application.dataPath, "");
                 if (!string.IsNullOrWhiteSpace(dir))
                 {
+                    // 格納されてるフォルダごとにメニューを分ける？
+                    var isFolder = EditorUtility.DisplayDialog("確認", "フォルダごとにメニューを作成しますか？", "作る", "作らない");
+                    
                     // .animのみを取得
                     var files = Directory.GetFiles(dir, "*.anim", SearchOption.AllDirectories);
                     foreach (var path in files)
@@ -166,6 +178,13 @@ namespace kakunvr.FacialLockGenerator.Scripts
                                 Target = animT,
                                 Value = Mathf.RoundToInt(curve[curve.length - 1].value)
                             });
+                        }
+                        
+                        if (isFolder)
+                        {
+                            // ファイルが有るフォルダ名を取得
+                            var folder = Path.GetFileName(Path.GetDirectoryName(path));
+                            facialData.Folder = folder;
                         }
 
                         facialData.Name = Path.GetFileNameWithoutExtension(path);
@@ -246,23 +265,6 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     {
                         isOk = false;
                         errorMessage = "表情名が空です";
-                        break;
-                    }
-
-                    var count = _facialList.Count(x => x.Name == facialData.Name);
-                    if (count > 1)
-                    {
-                        isOk = false;
-                        errorMessage = $"{facialData.Name}の表情名が重複しています";
-                        break;
-                    }
-
-                    if (facialData.Name == "_reset" ||
-                        facialData.Name == "_none" ||
-                        facialData.Name == "_default")
-                    {
-                        isOk = false;
-                        errorMessage = $"{facialData.Name}は使用できない表情名です";
                         break;
                     }
                 }
@@ -421,7 +423,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     var texture2D = new Texture2D(width, height, TextureFormat.ARGB32, false);
                     texture2D.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                     texture2D.Apply();
-                    var fileName = $"{thumbnailPath}/{facialData.Name}.png";
+                    var fileName = $"{thumbnailPath}/facial_{i}.png";
                     File.WriteAllBytes(fileName, texture2D.EncodeToPNG());
 
                     RenderTexture.active = preRt;
@@ -513,7 +515,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                         "blendShape." + blendShapeData.Name, curve);
                 }
 
-                AssetDatabase.CreateAsset(clip, Path.Combine(animationPath, $"{facialData.Name}.anim"));
+                AssetDatabase.CreateAsset(clip, Path.Combine(animationPath, $"facial_{i}.anim"));
             }
 
 
@@ -678,7 +680,7 @@ namespace kakunvr.FacialLockGenerator.Scripts
                     layer.stateMachine.MakeUniqueStateName(
                         facialData.Name), new Vector3(300 + 30 * i, 200 + 100 * i, 0));
                 state.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                    Path.Combine(dirPath, "animation", $"{facialData.Name}.anim"));
+                    Path.Combine(dirPath, "animation", $"facial_{i}.anim"));
                 state.writeDefaultValues = false;
 
                 // AddAnyStateTransition
@@ -732,41 +734,63 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 value = 0
             });
             
-            int menuIndex = 0;
+            // 各フォルダ用のメニューを作る
+            var menuDic = new Dictionary<string, VRCExpressionsMenu>();
+            var folders = _facialList.Where(x=> !string.IsNullOrEmpty(x.Folder)).Select(x => x.Folder).Distinct();
+            menuDic.Add(string.Empty, menuAsset);
+            foreach (var folder in folders)
+            {
+                if (string.IsNullOrEmpty(folder)) continue;
+                var guid = GUID.Generate().ToString().Replace("-", "");
+                menuDic.Add(folder,
+                    CreateOrLoadScriptableObject<VRCExpressionsMenu>(Path.Combine(menuPath,
+                        $"faciallocker_{folder}_{guid}.asset")));
+            }
+
+            // 登録する
+            foreach (var menu in menuDic)
+            {
+                if (string.IsNullOrEmpty(menu.Key)) continue;
+                menuAsset = AddMenuItem(menuAsset,
+                    new VRCExpressionsMenu.Control()
+                    {
+                        name = menu.Key,
+                        type = VRCExpressionsMenu.Control.ControlType.SubMenu,
+                        subMenu = menu.Value
+                    },
+                    menuPath
+                );
+            }
 
             for (var i = 0; i < _facialList.Count; ++i)
             {
                 var facialData = _facialList[i];
-                // 7つまで埋まってて、残り2つ以上あるならメニューを作る
-                if (menuAsset.controls.Count >= 7 && i < _facialList.Count - 1)
-                {
-                    var newMenu  = CreateOrLoadScriptableObject<VRCExpressionsMenu>(Path.Combine(menuPath,
-                        $"faciallocker_{menuIndex}.asset"));
-                    menuIndex++;
-                    menuAsset.controls.Add(new VRCExpressionsMenu.Control()
-                    {
-                        name = "Next",
-                        icon = null,
-                        type = VRCExpressionsMenu.Control.ControlType.SubMenu,
-                        subMenu = newMenu
-                    });
-                    EditorUtility.SetDirty(menuAsset);
-                    menuAsset = newMenu;
-                }
 
-                menuAsset.controls.Add(new VRCExpressionsMenu.Control()
-                {
-                    name = facialData.Name,
-                    icon = AssetDatabase.LoadAssetAtPath<Texture2D>(Path.Combine(dirPath, "thumbnail",
-                        $"{facialData.Name}.png")),
-                    type = VRCExpressionsMenu.Control.ControlType.Toggle,
-                    parameter = new VRCExpressionsMenu.Control.Parameter()
+                var addedMenu = menuDic[facialData.Folder];
+
+                addedMenu = AddMenuItem(addedMenu,
+                    new VRCExpressionsMenu.Control()
                     {
-                        name = FacialLockIdParamName
+                        name = facialData.Name,
+                        icon = AssetDatabase.LoadAssetAtPath<Texture2D>(Path.Combine(dirPath, "thumbnail",
+                            $"facial_{i}.png")),
+                        type = VRCExpressionsMenu.Control.ControlType.Toggle,
+                        parameter = new VRCExpressionsMenu.Control.Parameter()
+                        {
+                            name = FacialLockIdParamName
+                        },
+                        value = i + 1
                     },
-                    value = i + 1
-                });
+                    menuPath
+                );
+                menuDic[facialData.Folder] = addedMenu;
             }
+
+            foreach (var menu in menuDic)
+            {
+                EditorUtility.SetDirty(menu.Value);
+            }
+
             EditorUtility.SetDirty(menuAsset);
 
             // MA登録用のRootメニューを作る
@@ -830,6 +854,44 @@ namespace kakunvr.FacialLockGenerator.Scripts
             prefabObject.transform.localRotation = Quaternion.identity;
             
             Selection.activeGameObject = prefabObject;
+        }
+
+
+
+        VRCExpressionsMenu AddMenuItem(VRCExpressionsMenu menu,
+            VRCExpressionsMenu.Control control,
+            string menuPath)
+        {
+            // すでに8個埋まっていたら新しいメニューを作る
+            if (menu.controls.Count >= 8)
+            {
+                var guid = GUID.Generate().ToString().Replace("-", "");
+                var newMenu = CreateOrLoadScriptableObject<VRCExpressionsMenu>(Path.Combine(menuPath,
+                    $"faciallocker_{guid}.asset"));
+
+                // 7個になるまで次のメニューに移動する
+                while (menu.controls.Count > 7)
+                {
+                    var privItem = menu.controls[menu.controls.Count - 1];
+                    menu.controls.RemoveAt(menu.controls.Count - 1);
+                    newMenu.controls.Add(privItem);
+                }
+
+                // Nextのアイテムを追加
+                menu.controls.Add(new VRCExpressionsMenu.Control()
+                {
+                    name = "Next",
+                    icon = null,
+                    type = VRCExpressionsMenu.Control.ControlType.SubMenu,
+                    subMenu = newMenu
+                });
+                EditorUtility.SetDirty(menu);
+
+                menu = newMenu;
+            }
+
+            menu.controls.Add(control);
+            return menu;
         }
 
         private static string GetFullPath(Transform t)
