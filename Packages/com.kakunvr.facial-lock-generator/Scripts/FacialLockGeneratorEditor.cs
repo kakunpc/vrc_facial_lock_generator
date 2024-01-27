@@ -139,6 +139,42 @@ namespace kakunvr.FacialLockGenerator.Scripts
                 }
             });
             
+            menu.AddItem(new GUIContent(".animで追加（複数）"), false , () =>
+            {
+                var dir = EditorUtility.OpenFolderPanel("追加する.animを選択", Application.dataPath, "");
+                if (!string.IsNullOrWhiteSpace(dir))
+                {
+                    // .animのみを取得
+                    var files = Directory.GetFiles(dir, "*.anim", SearchOption.AllDirectories);
+                    foreach (var path in files)
+                    {
+                        var facialData = new FacialData();
+                        var blendShapeData = new List<BlendShapeData>();
+                        var assetPath = path.Substring(path.IndexOf("Assets", StringComparison.Ordinal));
+                        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+                        var curves = AnimationUtility.GetCurveBindings(clip);
+                        foreach (var binding in curves)
+                        {
+                            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                            var animT = selectedGameObject.transform.Find(binding.path)
+                                ?.GetComponent<SkinnedMeshRenderer>();
+                            if (animT == null) continue;
+
+                            blendShapeData.Add(new BlendShapeData
+                            {
+                                Name = binding.propertyName.Substring("blendShape.".Length),
+                                Target = animT,
+                                Value = Mathf.RoundToInt(curve[curve.length - 1].value)
+                            });
+                        }
+
+                        facialData.Name = Path.GetFileNameWithoutExtension(path);
+                        facialData.BlendShapeData = blendShapeData;
+                        Add(facialData);
+                    }
+                }
+            });
+            
             menu.DropDown(buttonRect);
         }
 
@@ -1017,8 +1053,14 @@ namespace kakunvr.FacialLockGenerator.Scripts
             // facialDataに従って値を適応
             foreach (var blendShape in facialList.BlendShapeData)
             {
-                var rootBlendShape = _blendShapeData.First(x => x.Target == blendShape.Target);
-                var data = rootBlendShape.BlendShapeList.First(x => x.Name == blendShape.Name);
+                var rootBlendShape = _blendShapeData.FirstOrDefault(x => x.Target == blendShape.Target);
+                var data = rootBlendShape?.BlendShapeList.FirstOrDefault(x => x.Name == blendShape.Name);
+                if (data == null)
+                {
+                    Debug.LogWarning($"{blendShape.Target.name}の{blendShape.Name}が見つかりません");
+                    continue;
+                }
+
                 data.IsUse = true;
                 data.Value = blendShape.Value;
             }
